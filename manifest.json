@@ -1,0 +1,17 @@
+{
+    "manifest_version": 3,
+    "name": "AnilistTTA",
+    "description": "Displays time till first episode of an anime airs within /animelist paths on Anilist.",
+    "version": "0.0.1",
+    "icons": {
+        "16": "logo/logo-16.png",
+        "48": "logo/logo-48.png",
+        "128": "logo/logo-128.png"
+    },
+    "action": {},
+    "permissions": ["storage", "activeTab", "tabs", "scripting"],
+	"host_permissions": ["https://anilist.co/*"],
+    "background": {
+        "service_worker": "service-worker.js"
+    }
+}
