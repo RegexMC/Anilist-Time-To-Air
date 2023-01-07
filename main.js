@@ -1,11 +1,38 @@
 {
+	function log(text) {
+		console.log(
+			"%cAnilistTTA%c " + text,
+			"background: #0B165D;color:#FFF;padding:2px;border-radius: 2px;line-height: 10px;",
+			""
+		);
+	}
+
+	function warn(text) {
+		console.warn(
+			"%cAnilistTTA%c " + text,
+			"background: #0B165D;color:#FFF;padding:2px;border-radius: 2px;line-height: 10px;",
+			""
+		);
+	}
+
+	function error(text) {
+		console.error(
+			"%cAnilistTTA%c " + text,
+			"background: #0B165D;color:#FFF;padding:2px;border-radius: 2px;line-height: 10px;",
+			""
+		);
+	}
+
 	function getData() {
+		log("Data fetched from local storage.");
 		return new Promise((resolve, reject) => {
 			chrome.storage.local.get("data", (res) => resolve(res.data));
 		});
 	}
 
 	function setData(data) {
+		log("Data set in local storage");
+		console.log(data);
 		chrome.storage.local.set({ data: data });
 	}
 
@@ -33,9 +60,15 @@
 	})();
 
 	getData().then((data) => {
+		if (!document.location.pathname.toLowerCase().includes("animelist")) return;
+
 		let localData = data;
 		if (!data || localData.entries == null) {
 			getAirDates().then((entries) => {
+				if (entries == null) {
+					error("Entries is null.");
+					return;
+				}
 				localData = { lastUpdatedTime: Math.floor(Date.now() / 1000), entries: entries };
 				setData({ lastUpdatedTime: Math.floor(Date.now() / 1000), entries: entries });
 			});
@@ -43,6 +76,10 @@
 			if (Math.floor(Date.now() / 1000) - data.lastUpdatedTime >= 3600) {
 				// Hour has progressed since last fetch.
 				getAirDates().then((entries) => {
+					if (entries == null) {
+						error("Entries is null.");
+						return;
+					}
 					localData = { lastUpdatedTime: Math.floor(Date.now() / 1000), entries: entries };
 					setData({ lastUpdatedTime: Math.floor(Date.now() / 1000), entries: entries });
 				});
@@ -56,7 +93,10 @@
 				"#app > div.page-content > div > div.content.container > div > div.lists"
 			);
 
-			if (!element) return;
+			if (!element) {
+				warn("Could not find div.lists element");
+				return;
+			}
 
 			for (let i = 1; i < element.children.length; i++) {
 				let list = element.children[i].lastChild.lastChild;
@@ -79,7 +119,6 @@
 						e.id = mediaId;
 						e.style.marginRight = 0;
 						e.style.whiteSpace = "nowrap";
-						// e.style.overflow = "hidden";
 
 						if (media.nextAiringEpisode && media.nextAiringEpisode.timeUntilAiring) {
 							let tUA = media.nextAiringEpisode.timeUntilAiring;
@@ -112,6 +151,10 @@
 							}
 						}
 
+						if (e.innerText.length > 0) {
+							log(mediaId + " : " + e.innerText);
+						}
+
 						titleDiv.appendChild(e);
 					}
 				}
@@ -120,7 +163,6 @@
 	});
 
 	async function getAirDates() {
-		console.log("FETCHED");
 		var query = `
 	query ($username: String) {
 		MediaListCollection(userName: $username, type: ANIME) {
@@ -148,6 +190,11 @@
 			"#app > div.page-content > div > div.header-wrap > div.banner > div.container > div > div.name-wrapper > h1"
 		).innerText;
 
+		if (!username || username.length == 0) {
+			warn("Username element not found or empty.");
+			return;
+		}
+
 		var variables = {
 			username: username
 		};
@@ -165,6 +212,8 @@
 		});
 
 		var json = await f.json();
+
+		log("New data fetched from API with username " + username);
 
 		const data = json.data;
 		const lists = data.MediaListCollection.lists;
