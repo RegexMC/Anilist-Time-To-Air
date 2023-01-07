@@ -50,9 +50,14 @@
 		}
 
 		observeDOM(document.body, (m) => {
+			if (!document.location.pathname.toLowerCase().includes("animelist")) return;
+
 			let element = document.querySelector(
 				"#app > div.page-content > div > div.content.container > div > div.lists"
 			);
+
+			if (!element) return;
+
 			for (let i = 1; i < element.children.length; i++) {
 				let list = element.children[i].lastChild.lastChild;
 				for (let j = 0; j < list.children.length; j++) {
@@ -73,6 +78,8 @@
 						var e = document.createElement("a");
 						e.id = mediaId;
 						e.style.marginRight = 0;
+						e.style.whiteSpace = "nowrap";
+						// e.style.overflow = "hidden";
 
 						if (media.nextAiringEpisode && media.nextAiringEpisode.timeUntilAiring) {
 							let tUA = media.nextAiringEpisode.timeUntilAiring;
@@ -84,7 +91,7 @@
 
 								e.innerText = days + "d " + hours + "h";
 							} else {
-								e.innerText = hUA + "h";
+								e.innerText = Math.floor(hUA) + "h";
 							}
 						} else {
 							let todaysDate = new Date();
@@ -113,6 +120,7 @@
 	});
 
 	async function getAirDates() {
+		console.log("FETCHED");
 		var query = `
 	query ($username: String) {
 		MediaListCollection(userName: $username, type: ANIME) {
